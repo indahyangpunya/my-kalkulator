@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kalkulator Baper</title>
+<style>
+:root{--bg:#fff4e0;--card:#ffffff;--ink:#3a2a1a;--key:#ffe3b3;--op:#ff8fab;--eq:#6ccf9c;--clr:#ff6b6b;--bub:#fff;--shadow:#e0b878;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d1726;--card:#2a2236;--ink:#f6ecff;--key:#403454;--op:#c2477a;--eq:#2f9e6e;--clr:#c24545;--bub:#3a2f4d;--shadow:#120d19;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1d1726;--card:#2a2236;--ink:#f6ecff;--key:#403454;--op:#c2477a;--eq:#2f9e6e;--clr:#c24545;--bub:#3a2f4d;--shadow:#120d19;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"Baloo 2","Comic Sans MS","Trebuchet MS",system-ui,sans-serif;display:flex;justify-content:center;align-items:center;padding:16px}
+.calc{width:100%;max-width:360px;background:var(--card);border-radius:28px;padding:18px;box-shadow:0 8px 0 var(--shadow),0 18px 30px rgba(0,0,0,.15)}
+.top{display:flex;align-items:center;gap:10px}
+#face{font-size:54px;line-height:1;transition:transform .2s}
+#face.pop{animation:pop .35s}
+@keyframes pop{30%{transform:scale(1.35) rotate(-10deg)}60%{transform:scale(.9) rotate(8deg)}}
+#bub{flex:1;background:var(--bub);border:2px solid var(--key);border-radius:16px;padding:8px 12px;font-size:14px;min-height:54px;display:flex;align-items:center;position:relative}
+#bub::before{content:"";position:absolute;left:-8px;top:20px;border:6px solid transparent;border-right-color:var(--key);border-left:0}
+.screen{margin:14px 0;background:var(--key);border-radius:18px;padding:10px 16px;text-align:right;min-height:96px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}
+#hist{font-size:15px;opacity:.6;min-height:20px}
+#out{font-size:44px;font-weight:800;white-space:nowrap}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+button{font:inherit;font-size:24px;font-weight:700;color:var(--ink);background:var(--key);border:0;border-radius:18px;height:62px;box-shadow:0 4px 0 var(--shadow);cursor:pointer;transition:transform .08s,box-shadow .08s}
+button:active{transform:translateY(4px);box-shadow:0 0 0 var(--shadow)}
+.op{background:var(--op);color:#fff}.eq{background:var(--eq);color:#fff}.clr{background:var(--clr);color:#fff}
+.w2{grid-column:span 2}
+.foot{text-align:center;font-size:12px;opacity:.6;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="calc">
+  <div class="top"><div id="face">😊</div><div id="bub">Halo! Mau ngitung apa hari ini?</div></div>
+  <div class="screen"><div id="hist"></div><div id="out">0</div></div>
+  <div class="grid" id="keys"></div>
+  <div class="foot">Akurat, tapi suka komentar ☕</div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const keys=[["C","clr"],["⌫",""],["%",""],["÷","op"],["7"],["8"],["9"],["×","op"],["4"],["5"],["6"],["−","op"],["1"],["2"],["3"],["+","op"],["0","w2"],[",",""],["=","eq"]];
+let cur="0",prev=null,op=null,fresh=false,hist="";
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const say=(m,f)=>{$("bub").textContent=m;const e=$("face");e.textContent=f;e.classList.remove("pop");void e.offsetWidth;e.classList.add("pop")};
+const fmt=s=>String(s).replace(".",",");
+function show(){const t=fmt(cur);$("out").textContent=t;$("out").style.fontSize=t.length>12?"24px":t.length>8?"32px":"44px";$("hist").textContent=hist}
+const quips={"+":["Nambah terus, kayak tagihan.","Tambah-tambah, semoga bukan utang."],"−":["Dikurangi… kayak saldo tanggal tua.","Minus-minus, hati-hati ya."],"×":["Kali-kalian! Anak matematika banget.","Dikali? Semoga hasilnya bukan cicilan."],"÷":["Dibagi rata ya, adil ya.","Bagi-bagi, jangan pelit."]};
+function calc(a,o,b){switch(o){case"+":return a+b;case"−":return a-b;case"×":return a*b;case"÷":return b===0?NaN:a/b}}
+function special(r){
+  if(r===0)return["Nol. Sama kayak motivasi hari Senin.","😶"];
+  if(r===100)return["Seratus! Nilai sempurna, nggak kayak mantan.","🥳"];
+  if(r===42)return["42, jawaban atas segalanya!","🤓"];
+  if(r===1337)return["1337 — kamu hacker ya?","😎"];
+  if(r===404)return["404: jawaban tidak ditemukan.","🫥"];
+  if(r===17)return["17! Tujuh belasan, merdeka!","🇮🇩"];
+  if(r<0)return["Negatif! Tetap positif ya.","🥲"];
+  if(Math.abs(r)>=1e6)return["Jutaan! Traktir dong.","🤑"];
+  return[pick(["Beres! Gampang kan.","Tada! Hasilnya sudah matang.","Mantap, kamu jenius!","Sudah kuhitung, tinggal kamu percaya.","Ez. Tapi tetap capek."]),pick(["😎","🤩","😌","🧐"])];
+}
+function press(k){
+  if(/\d/.test(k)){if(fresh||cur==="0"){cur=k;fresh=false}else if(cur.length<14)cur+=k;
+    if(cur.length>9)say("Angkanya panjang banget, kuat nggak?","😳");else say(pick(["Oke, lanjut.","Hmm, angka yang bagus.","Masuk!"]),"🙂");}
+  else if(k===","){if(fresh){cur="0";fresh=false}if(!cur.includes("."))cur+=".";say("Ada komanya, jadi serius nih.","🧐")}
+  else if(k==="C"){cur="0";prev=null;op=null;hist="";fresh=false;say("Semua dihapus. Hidup baru!","🫠")}
+  else if(k==="⌫"){cur=cur.length>1?cur.slice(0,-1):"0";say("Salah ketik? Wajar kok.","🙈")}
+  else if(k==="%"){cur=String(parseFloat((parseFloat(cur)/100).toPrecision(12)));say("Persen-persenan, mirip diskon.","🛍️")}
+  else if(k==="="){if(op===null)return;const b=parseFloat(cur),r=calc(prev,op,b);
+    if(Number.isNaN(r)){cur="0";hist="";prev=null;op=null;say("Dibagi nol? Kamu kira aku dukun?","😵");show();return}
+    hist=fmt(prev)+" "+op+" "+fmt(b)+" =";cur=String(parseFloat(r.toPrecision(12)));prev=null;op=null;fresh=true;
+    const[m,f]=special(parseFloat(cur));say(m,f)}
+  else{if(op!==null&&!fresh){const r=calc(prev,op,parseFloat(cur));if(Number.isNaN(r)){cur="0";prev=null;op=null;hist="";say("Dibagi nol? Kamu kira aku dukun?","😵");show();return}prev=parseFloat(r.toPrecision(12))}else prev=parseFloat(cur);
+    op=k;fresh=true;hist=fmt(prev)+" "+k;say(pick(quips[k]),"🤔")}
+  show();
+}
+const map={"*":"×","/":"÷","-":"−",".":",",Enter:"=",Backspace:"⌫",Escape:"C"};
+keys.forEach(([k,c])=>{const b=document.createElement("button");b.textContent=k;if(c)b.className=c;b.onclick=()=>press(k);$("keys").appendChild(b)});
+document.addEventListener("keydown",e=>{const k=map[e.key]||e.key;if(/^[0-9]$|^[+×÷−,=%C⌫]$/.test(k)){e.preventDefault();press(k)}});
+show();
+</script>
+</body>
+</html>
